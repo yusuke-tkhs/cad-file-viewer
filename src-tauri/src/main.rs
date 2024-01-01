@@ -8,6 +8,8 @@ fn greet(name: &str) -> String {
 }
 
 fn main() {
+    
+    // here `"quit".to_string()` defines the menu item id, and the second parameter is the menu item label.
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![greet])
         .run(tauri::generate_context!())

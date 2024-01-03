@@ -14,10 +14,16 @@ import {
   Switch,
   RadioGroup,
   Separator,
+  DropdownMenu,
+  Tabs,
 } from '@radix-ui/themes';
-import * as Menubar from '@radix-ui/react-menubar';
-import { CheckIcon, ChevronRightIcon, DotFilledIcon } from '@radix-ui/react-icons';
-import './MenuBar.css';
+import {
+  CheckIcon,
+  ChevronRightIcon,
+  DotFilledIcon,
+  CaretDownIcon,
+  PlusIcon,
+} from '@radix-ui/react-icons';
 
 interface ThreeDViewProps {
   isActive: boolean;
@@ -47,127 +53,150 @@ const TabWindow: FC = () => {
   );
 };
 
-const VIEW_LAYOUT_KINDS = ['One', 'TwoSplits', 'ThreeSplits', 'FourSplits'];
+const range = (start: number, end: number) =>
+  Array.from({ length: end - start + 1 }, (_, k) => k + start);
+
 const App: FC = () => {
-  const [viewLayoutRadioSelection, setViewLayoutRadioSelection] = React.useState(
-    VIEW_LAYOUT_KINDS[0],
-  );
+  const [rowNumberOfViewDivision, serRowNumberOfViewDivision] = React.useState(1);
+  const [colNumberOfViewDivision, setColNumberOfViewDivision] = React.useState(1);
+  const numberOfViews = rowNumberOfViewDivision * colNumberOfViewDivision;
   const [linksCameraPerspective, setLinksCameraPerspective] = React.useState(false);
+  // dummy
+  const [numberOfTabs, setNumberOfTabs] = React.useState(1);
+  const [activeTab, setActiveTabs] = React.useState(1);
 
   return (
-    <Box position='fixed' width='100%' top='0' bottom='0'>
-      {
-        // MenuBarはRadix primitive. ThemeのPopUpとかを使ってメニューは実装し直したほうがいいかもしれない
-      }
-      {
-        // radio button の動作例など
-      }
-      <RadioGroup.Root defaultValue='1' onValueChange={(e) => console.log(e)}>
-        <Flex gap='2' direction='column'>
-          <Text as='label' size='2'>
-            <Flex gap='2'>
-              <RadioGroup.Item value='1' /> Default
-            </Flex>
-          </Text>
-          <Text as='label' size='2'>
-            <Flex gap='2'>
-              <RadioGroup.Item value='2' /> Comfortable
-            </Flex>
-          </Text>
-          <Text as='label' size='2'>
-            <Flex gap='2'>
-              <RadioGroup.Item value='3' /> Compact
-            </Flex>
-          </Text>
-        </Flex>
-      </RadioGroup.Root>
-      <Separator my='2' size='2' />
-      <Menubar.Root className='MenubarRoot'>
-        <Menubar.Menu>
-          <Menubar.Trigger className='MenubarTrigger'>Window</Menubar.Trigger>
-          <Menubar.Portal>
-            <Menubar.Content
-              className='MenubarContent'
-              align='start'
-              sideOffset={5}
-              alignOffset={-3}
+    <Flex direction='column' position='fixed' width='100%' top='0' bottom='0'>
+      {/* application menu bar */}
+      <Flex gap='2' align='start' direction='row'>
+        <DropdownMenu.Root>
+          <DropdownMenu.Trigger>
+            <Box width='6'>
+              <Button variant='ghost'>File</Button>
+            </Box>
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Content>
+            {numberOfViews == 1 ? (
+              <DropdownMenu.Item onClick={() => console.log('aaaa')}> OpenFile </DropdownMenu.Item>
+            ) : (
+              <DropdownMenu.Sub>
+                <DropdownMenu.SubTrigger>Open file in</DropdownMenu.SubTrigger>
+
+                <DropdownMenu.SubContent>
+                  {range(1, numberOfViews).map((view_id, index) => (
+                    <DropdownMenu.Item key={index}>View {view_id}</DropdownMenu.Item>
+                  ))}
+                </DropdownMenu.SubContent>
+              </DropdownMenu.Sub>
+            )}
+            <DropdownMenu.Sub>
+              <DropdownMenu.SubTrigger>Screen shot</DropdownMenu.SubTrigger>
+              <DropdownMenu.SubContent>
+                <DropdownMenu.Item>Save to file (unimplemented)</DropdownMenu.Item>
+                <DropdownMenu.Item>Copy to Clipboard (unimplemented)</DropdownMenu.Item>
+              </DropdownMenu.SubContent>
+            </DropdownMenu.Sub>
+          </DropdownMenu.Content>
+        </DropdownMenu.Root>
+        <DropdownMenu.Root>
+          <DropdownMenu.Trigger>
+            <Button variant='ghost'>View</Button>
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Content>
+            <DropdownMenu.Item
+              onClick={() => {
+                serRowNumberOfViewDivision(1);
+                setColNumberOfViewDivision(1);
+              }}
             >
-              <Menubar.RadioGroup
-                value={viewLayoutRadioSelection}
-                onValueChange={setViewLayoutRadioSelection}
-              >
-                {VIEW_LAYOUT_KINDS.map((item) => (
-                  <Menubar.RadioItem className='MenubarRadioItem inset' key={item} value={item}>
-                    <Menubar.ItemIndicator className='MenubarItemIndicator'>
-                      <DotFilledIcon />
-                    </Menubar.ItemIndicator>
-                    {item}
-                  </Menubar.RadioItem>
-                ))}
-              </Menubar.RadioGroup>
-            </Menubar.Content>
-          </Menubar.Portal>
-        </Menubar.Menu>
-        <Menubar.Menu>
-          <Menubar.Trigger className='MenubarTrigger'>View</Menubar.Trigger>
-          <Menubar.Portal>
-            <Menubar.Content
-              className='MenubarContent'
-              align='start'
-              sideOffset={5}
-              alignOffset={-3}
+              Single view
+            </DropdownMenu.Item>
+            <DropdownMenu.Item
+              onClick={() => {
+                serRowNumberOfViewDivision(1);
+                setColNumberOfViewDivision(2);
+              }}
             >
-              <Menubar.CheckboxItem
-                className='MenubarCheckboxItem inset'
-                checked={linksCameraPerspective}
-                onCheckedChange={() => {
-                  if (linksCameraPerspective) {
-                    console.log(`linksCameraPerspective: ${linksCameraPerspective}`);
-                  }
-                  setLinksCameraPerspective(!linksCameraPerspective);
-                }}
-              >
-                <Menubar.ItemIndicator className='MenubarItemIndicator'>
-                  <CheckIcon />
-                </Menubar.ItemIndicator>
-                Links camera perspecrive
-              </Menubar.CheckboxItem>
-            </Menubar.Content>
-          </Menubar.Portal>
-        </Menubar.Menu>
-      </Menubar.Root>
-      <Flex gap='2' direction='row' width='100%' height='100%'>
-        <Flex gap='2' direction='column' width='100%' height='100%'>
-          <div
-            style={{ backgroundColor: 'green', width: '100%', height: '100%', borderColor: 'red' }}
-          >
-            <a color='black'>1</a>
-          </div>
-          <div
-            style={{ backgroundColor: 'blue', width: '100%', height: '100%', borderColor: 'blue' }}
-          >
-            <a color='black'>2</a>
-          </div>
-        </Flex>
-        <Flex gap='2' direction='column' width='100%' height='100%'>
-          <div
-            style={{
-              backgroundColor: 'orange',
-              width: '100%',
-              height: '100%',
-              borderColor: 'blue',
-            }}
-          >
-            <a color='black'>3</a>
-          </div>
-          <div
-            style={{ backgroundColor: 'gray', width: '100%', height: '100%', borderColor: 'blue' }}
-          >
-            <a color='black'>4</a>
-          </div>
-        </Flex>
+              Double views (1 row * 2 col)
+            </DropdownMenu.Item>
+            <DropdownMenu.Item
+              onClick={() => {
+                serRowNumberOfViewDivision(2);
+                setColNumberOfViewDivision(2);
+              }}
+            >
+              Four views (2 row * 2 col)
+            </DropdownMenu.Item>
+            <DropdownMenu.Item>Custom division...</DropdownMenu.Item>
+            <DropdownMenu.Separator />
+            <DropdownMenu.CheckboxItem
+              checked={linksCameraPerspective}
+              onClick={() => setLinksCameraPerspective(!linksCameraPerspective)}
+            >
+              Link perspective of cameras
+            </DropdownMenu.CheckboxItem>
+          </DropdownMenu.Content>
+        </DropdownMenu.Root>
       </Flex>
-    </Box>
+      {
+        /* View layolut */
+        // タブに＋ボタンをどうやって出せばいいのかわからない
+      }
+      <Flex gap='2' direction='column' width='100%' height='100%'>
+        {range(0, rowNumberOfViewDivision - 1).map((rowIndex) => (
+          <Flex key={rowIndex} gap='2' direction='row' width='100%' height='100%'>
+            {
+              // view port mock
+              range(0, colNumberOfViewDivision - 1).map((colIndex) => {
+                const view_id = rowIndex * colNumberOfViewDivision + colIndex + 1;
+                return (
+                  <Box key={colIndex} width='100%' height='100%'>
+                    <Tabs.Root defaultValue='1'>
+                      <Tabs.List>
+                        {numberOfTabs > 0 ? (
+                          range(1, numberOfTabs).map((tabIndex) => (
+                            <Tabs.Trigger key={tabIndex} value={tabIndex.toString()}>
+                              Tab {tabIndex}
+                            </Tabs.Trigger>
+                          ))
+                        ) : (
+                          <></>
+                        )}
+                        <Tabs.Trigger value='new' onClick={() => {
+                              setNumberOfTabs(numberOfTabs + 1);
+                            }}
+                        >
+                          <PlusIcon
+                            
+                          />
+                        </Tabs.Trigger>
+                      </Tabs.List>
+
+                      <Box px='4' pt='3' pb='2' width='100%' height='100%'>
+                        {numberOfTabs > 0 ? (
+                          range(1, numberOfTabs).map((tabIndex) => (
+                            <Tabs.Content value={tabIndex.toString()}>
+                              <div
+                                key={tabIndex}
+                                style={{ backgroundColor: 'gray', width: '100%', height: '100%' }}
+                              >
+                                {view_id}
+                              </div>
+                            </Tabs.Content>
+                          ))
+                        ) : (
+                          <></>
+                        )}
+                      </Box>
+                    </Tabs.Root>
+                  </Box>
+                );
+              })
+            }
+          </Flex>
+        ))}
+      </Flex>
+    </Flex>
   );
 };
 

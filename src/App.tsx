@@ -1,6 +1,4 @@
-import React, { useState, FC } from 'react';
-import { Canvas } from '@react-three/fiber';
-import { extend } from '@react-three/fiber';
+import React, { FC, ReactNode } from 'react';
 import {
   Flex,
   Text,
@@ -17,39 +15,64 @@ import {
   DropdownMenu,
   Tabs,
 } from '@radix-ui/themes';
-import {
-  CheckIcon,
-  ChevronRightIcon,
-  DotFilledIcon,
-  CaretDownIcon,
-  PlusIcon,
-} from '@radix-ui/react-icons';
+import { PlusIcon } from '@radix-ui/react-icons';
 
-interface ThreeDViewProps {
-  isActive: boolean;
-}
+import ThreeDView from './threeDView';
 
-const ThreeDView: FC<{ isActive: boolean }> = ({ isActive }) => {
-  if (!isActive) return null;
+const TabView: FC<{ children: (isActive: boolean) => ReactNode }> = ({ children }) => {
+  const [numberOfTabs, setNumberOfTabs] = React.useState(1);
+  const [activeTab, setActiveTab] = React.useState(1);
   return (
-    <Canvas>
-      {/* 立方体のレンダリング */}
-      <mesh>
-        <boxGeometry args={[1, 1, 1]} />
-        <meshStandardMaterial attach='material' color='orange' />
-      </mesh>
-    </Canvas>
-  );
-};
+    <Box width='100%' height='100%' grow='1'>
+      <Tabs.Root
+        defaultValue='1'
+        onValueChange={(value) => {
+          console.log('Tabs.Root onValueChange');
+          console.log(value);
+          setActiveTab(parseInt(value));
+        }}
+      >
+        <Tabs.List>
+          {numberOfTabs > 0 ? (
+            range(1, numberOfTabs).map((tabIndex) => (
+              <Tabs.Trigger key={tabIndex} value={tabIndex.toString()}>
+                Tab {tabIndex}
+              </Tabs.Trigger>
+            ))
+          ) : (
+            <></>
+          )}
+          <Box pt='2' pl='2'>
+            <Button
+              size='1'
+              onClick={() => {
+                setNumberOfTabs(numberOfTabs + 1);
+              }}
+            >
+              <PlusIcon />
+            </Button>
+          </Box>
+        </Tabs.List>
 
-const TabWindow: FC = () => {
-  const [activeTab, setActiveTab] = useState<number>(0);
-  return (
-    <div>
-      <div>{/* タブの切り替えボタン */}</div>
-      <ThreeDView isActive={activeTab === 0} />
-      {/* 他のタブも同様に追加 */}
-    </div>
+        <Box px='4' pt='3' pb='2' width='100%' height='100%' grow='1'>
+          {numberOfTabs > 0 ? (
+            range(1, numberOfTabs).map((tabIndex) => (
+              <Tabs.Content
+                value={tabIndex.toString()}
+                // active タブのときだけ表示、かつ常にマウントし続ける（unmountしない）ことで、
+                // タブを切り替えても３次元ビューの視点がリセットされないようにする
+                hidden={activeTab !== tabIndex}
+                forceMount={true}
+              >
+                {children(tabIndex === activeTab)}
+              </Tabs.Content>
+            ))
+          ) : (
+            <></>
+          )}
+        </Box>
+      </Tabs.Root>
+    </Box>
   );
 };
 
@@ -61,9 +84,6 @@ const App: FC = () => {
   const [colNumberOfViewDivision, setColNumberOfViewDivision] = React.useState(1);
   const numberOfViews = rowNumberOfViewDivision * colNumberOfViewDivision;
   const [linksCameraPerspective, setLinksCameraPerspective] = React.useState(false);
-  // dummy
-  const [numberOfTabs, setNumberOfTabs] = React.useState(1);
-  const [activeTab, setActiveTabs] = React.useState(1);
 
   return (
     <Flex direction='column' position='fixed' width='100%' top='0' bottom='0'>
@@ -141,57 +161,16 @@ const App: FC = () => {
       {
         /* View layolut */
         // タブに＋ボタンをどうやって出せばいいのかわからない
+        // Tab コンポーネントを使わずに、ButtonとSeparatorを使って実装するしか無いのではないか
       }
-      <Flex gap='2' direction='column' width='100%' height='100%'>
+      <Flex gap='2' direction='column' width='100%' height='100%' grow='1'>
         {range(0, rowNumberOfViewDivision - 1).map((rowIndex) => (
-          <Flex key={rowIndex} gap='2' direction='row' width='100%' height='100%'>
+          <Flex key={rowIndex} gap='2' direction='row' width='100%' height='100%' grow='1'>
             {
               // view port mock
-              range(0, colNumberOfViewDivision - 1).map((colIndex) => {
-                const view_id = rowIndex * colNumberOfViewDivision + colIndex + 1;
-                return (
-                  <Box key={colIndex} width='100%' height='100%'>
-                    <Tabs.Root defaultValue='1'>
-                      <Tabs.List>
-                        {numberOfTabs > 0 ? (
-                          range(1, numberOfTabs).map((tabIndex) => (
-                            <Tabs.Trigger key={tabIndex} value={tabIndex.toString()}>
-                              Tab {tabIndex}
-                            </Tabs.Trigger>
-                          ))
-                        ) : (
-                          <></>
-                        )}
-                        <Tabs.Trigger value='new' onClick={() => {
-                              setNumberOfTabs(numberOfTabs + 1);
-                            }}
-                        >
-                          <PlusIcon
-                            
-                          />
-                        </Tabs.Trigger>
-                      </Tabs.List>
-
-                      <Box px='4' pt='3' pb='2' width='100%' height='100%'>
-                        {numberOfTabs > 0 ? (
-                          range(1, numberOfTabs).map((tabIndex) => (
-                            <Tabs.Content value={tabIndex.toString()}>
-                              <div
-                                key={tabIndex}
-                                style={{ backgroundColor: 'gray', width: '100%', height: '100%' }}
-                              >
-                                {view_id}
-                              </div>
-                            </Tabs.Content>
-                          ))
-                        ) : (
-                          <></>
-                        )}
-                      </Box>
-                    </Tabs.Root>
-                  </Box>
-                );
-              })
+              range(0, colNumberOfViewDivision - 1).map((colIndex) => (
+                <TabView key={colIndex}>{() => <ThreeDView />}</TabView>
+              ))
             }
           </Flex>
         ))}

@@ -33,46 +33,50 @@ const TabView: FC<{ viewIndex: number; children: ReactNode }> = ({ viewIndex, ch
         }}
         style={{ width: '100%', height: '100%' }}
       >
-        <Tabs.List>
-          {numberOfTabs > 0 ? (
-            range(1, numberOfTabs).map((tabIndex) => (
-              <Tabs.Trigger key={tabIndex} value={tabIndex.toString()}>
-                Tab {viewIndex}_{tabIndex}
-              </Tabs.Trigger>
-            ))
-          ) : (
-            <></>
-          )}
-          <Box pt='2' pl='2'>
-            <Button
-              size='1'
-              onClick={() => {
-                setNumberOfTabs(numberOfTabs + 1);
-              }}
-            >
-              <PlusIcon />
-            </Button>
+        <Flex width='100%' height='100%' direction='column' gap='1'>
+          <Box width='100%' height='7'>
+            <Tabs.List>
+              {numberOfTabs > 0 ? (
+                range(1, numberOfTabs).map((tabIndex) => (
+                  <Tabs.Trigger key={tabIndex} value={tabIndex.toString()}>
+                    Tab {viewIndex}_{tabIndex}
+                  </Tabs.Trigger>
+                ))
+              ) : (
+                <></>
+              )}
+              <Box pt='2' pl='2'>
+                <Button
+                  size='1'
+                  onClick={() => {
+                    setNumberOfTabs(numberOfTabs + 1);
+                  }}
+                >
+                  <PlusIcon />
+                </Button>
+              </Box>
+            </Tabs.List>
           </Box>
-        </Tabs.List>
 
-        <Box px='1' pt='2' pb='1' width='100%' height='100%' grow='1'>
-          {numberOfTabs > 0 ? (
-            range(1, numberOfTabs).map((tabIndex) => (
-              <Tabs.Content
-                value={tabIndex.toString()}
-                // active タブのときだけ表示、かつ常にマウントし続ける（unmountしない）ことで、
-                // タブを切り替えても３次元ビューの視点がリセットされないようにする
-                hidden={activeTab !== tabIndex}
-                forceMount={true}
-                style={{ width: '100%', height: '100%' }}
-              >
-                {children}
-              </Tabs.Content>
-            ))
-          ) : (
-            <></>
-          )}
-        </Box>
+          <Box px='1' pt='2' pb='1' width='100%' height='100%'>
+            {numberOfTabs > 0 ? (
+              range(1, numberOfTabs).map((tabIndex) => (
+                <Tabs.Content
+                  value={tabIndex.toString()}
+                  // active タブのときだけ表示、かつ常にマウントし続ける（unmountしない）ことで、
+                  // タブを切り替えても３次元ビューの視点がリセットされないようにする
+                  hidden={activeTab !== tabIndex}
+                  forceMount={true}
+                  style={{ width: '100%', height: '90%' }}
+                >
+                  {children}
+                </Tabs.Content>
+              ))
+            ) : (
+              <></>
+            )}
+          </Box>
+        </Flex>
       </Tabs.Root>
     </Box>
   );
@@ -88,7 +92,7 @@ const App: FC = () => {
   const [linksCameraPerspective, setLinksCameraPerspective] = React.useState(false);
 
   return (
-    <Flex direction='column' position='fixed' width='100%' top='0' bottom='0' gap='1'>
+    <Flex direction='column' position='fixed' width='100%' top='0' bottom='0' gap='2'>
       {/* application menu bar */}
       <Flex gap='2' align='start' direction='row'>
         <DropdownMenu.Root>
@@ -167,6 +171,8 @@ const App: FC = () => {
         columns={colNumberOfViewDivision.toString()}
         width='100%'
         height='100%'
+        top='auto'
+        grow='1'
       >
         {range(0, rowNumberOfViewDivision * colNumberOfViewDivision - 1).map((index) => (
           <TabView key={index} viewIndex={index}>

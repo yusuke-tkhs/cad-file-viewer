@@ -1,6 +1,6 @@
 import { FC, memo } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { Edges, OrbitControls, Box } from '@react-three/drei';
+import { Edges, Box, OrbitControls } from '@react-three/drei';
 
 const ThreeDView: FC = memo(() => {
   const cameraProps = {
@@ -11,6 +11,7 @@ const ThreeDView: FC = memo(() => {
     near: -20,
     far: 100,
   };
+
   return (
     <Canvas
       style={{ background: 'white', width: '100%', height: '100%', flexGrow: 1 }}
@@ -18,12 +19,13 @@ const ThreeDView: FC = memo(() => {
       camera={cameraProps}
     >
       {/* 立方体のレンダリング */}
+      <OrbitControls zoomToCursor={true} enableDamping={false} />
+      {/* <MyOrbitControls/> */}
       <ambientLight intensity={0.5} />
       <pointLight position={[10, 10, 10]} />
-      <OrbitControls />
       <mesh>
         <boxGeometry args={[10, 10, 10]} />
-        <meshStandardMaterial attach='material' color='orange' />
+        <meshStandardMaterial attach='material' color='green' />
         <Edges>
           <Box args={[1, 1, 1]} />
         </Edges>

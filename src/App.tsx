@@ -19,7 +19,7 @@ import { PlusIcon } from '@radix-ui/react-icons';
 
 import ThreeDView from './threeDView';
 
-const TabView: FC<{ children: (isActive: boolean) => ReactNode }> = ({ children }) => {
+const TabView: FC<{ viewIndex: number; children: ReactNode }> = ({ viewIndex, children }) => {
   const [numberOfTabs, setNumberOfTabs] = React.useState(1);
   const [activeTab, setActiveTab] = React.useState(1);
   return (
@@ -36,7 +36,7 @@ const TabView: FC<{ children: (isActive: boolean) => ReactNode }> = ({ children 
           {numberOfTabs > 0 ? (
             range(1, numberOfTabs).map((tabIndex) => (
               <Tabs.Trigger key={tabIndex} value={tabIndex.toString()}>
-                Tab {tabIndex}
+                Tab {viewIndex}_{tabIndex}
               </Tabs.Trigger>
             ))
           ) : (
@@ -64,7 +64,7 @@ const TabView: FC<{ children: (isActive: boolean) => ReactNode }> = ({ children 
                 hidden={activeTab !== tabIndex}
                 forceMount={true}
               >
-                {children(tabIndex === activeTab)}
+                {children}
               </Tabs.Content>
             ))
           ) : (
@@ -158,23 +158,20 @@ const App: FC = () => {
           </DropdownMenu.Content>
         </DropdownMenu.Root>
       </Flex>
-      {
-        /* View layolut */
-        // タブに＋ボタンをどうやって出せばいいのかわからない
-        // Tab コンポーネントを使わずに、ButtonとSeparatorを使って実装するしか無いのではないか
-      }
-      <Flex gap='2' direction='column' width='100%' height='100%' grow='1'>
-        {range(0, rowNumberOfViewDivision - 1).map((rowIndex) => (
-          <Flex key={rowIndex} gap='2' direction='row' width='100%' height='100%' grow='1'>
-            {
-              // view port mock
-              range(0, colNumberOfViewDivision - 1).map((colIndex) => (
-                <TabView key={colIndex}>{() => <ThreeDView />}</TabView>
-              ))
-            }
-          </Flex>
+      {/* View layolut */}
+      <Grid
+        gap='1'
+        rows={rowNumberOfViewDivision.toString()}
+        columns={colNumberOfViewDivision.toString()}
+        width='100%'
+        height='100%'
+      >
+        {range(0, rowNumberOfViewDivision * colNumberOfViewDivision - 1).map((index) => (
+          <TabView key={index} viewIndex={index}>
+            <ThreeDView />
+          </TabView>
         ))}
-      </Flex>
+      </Grid>
     </Flex>
   );
 };

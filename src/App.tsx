@@ -31,6 +31,7 @@ const TabView: FC<{ viewIndex: number; children: ReactNode }> = ({ viewIndex, ch
           console.log(value);
           setActiveTab(parseInt(value));
         }}
+        style={{ width: '100%', height: '100%' }}
       >
         <Tabs.List>
           {numberOfTabs > 0 ? (
@@ -54,7 +55,7 @@ const TabView: FC<{ viewIndex: number; children: ReactNode }> = ({ viewIndex, ch
           </Box>
         </Tabs.List>
 
-        <Box px='4' pt='3' pb='2' width='100%' height='100%' grow='1'>
+        <Box px='1' pt='2' pb='1' width='100%' height='100%' grow='1'>
           {numberOfTabs > 0 ? (
             range(1, numberOfTabs).map((tabIndex) => (
               <Tabs.Content
@@ -63,6 +64,7 @@ const TabView: FC<{ viewIndex: number; children: ReactNode }> = ({ viewIndex, ch
                 // タブを切り替えても３次元ビューの視点がリセットされないようにする
                 hidden={activeTab !== tabIndex}
                 forceMount={true}
+                style={{ width: '100%', height: '100%' }}
               >
                 {children}
               </Tabs.Content>
@@ -86,7 +88,7 @@ const App: FC = () => {
   const [linksCameraPerspective, setLinksCameraPerspective] = React.useState(false);
 
   return (
-    <Flex direction='column' position='fixed' width='100%' top='0' bottom='0'>
+    <Flex direction='column' position='fixed' width='100%' top='0' bottom='0' gap='1'>
       {/* application menu bar */}
       <Flex gap='2' align='start' direction='row'>
         <DropdownMenu.Root>

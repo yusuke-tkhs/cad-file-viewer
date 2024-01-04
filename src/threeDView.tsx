@@ -1,8 +1,6 @@
 import { FC, memo } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { Edges, OrbitControls, Box } from '@react-three/drei';
-// import { OrbitControls, TransformControls } from 'three-stdlib';
-// extend({ OrbitControls, TransformControls })
 
 const ThreeDView: FC = memo(() => {
   const cameraProps = {

@@ -2,6 +2,7 @@ import React, { FC } from 'react';
 import { Flex, Button, Grid, Box, DropdownMenu } from '@radix-ui/themes';
 
 import ThreeDView from './ThreeDView';
+import SharedOrbitControls, { CameraState, defaultCameraState } from './SharedOrbitControls';
 import range from './utility';
 
 const App: FC = () => {
@@ -9,6 +10,11 @@ const App: FC = () => {
   const [colNumberOfViewDivision, setColNumberOfViewDivision] = React.useState(1);
   const numberOfViews = rowNumberOfViewDivision * colNumberOfViewDivision;
   const [linksCameraPerspective, setLinksCameraPerspective] = React.useState(false);
+
+  const [cameraState, setCameraState] = React.useState<CameraState>(defaultCameraState);
+  // React.useEffect(() => {
+  //   setCameraState({ position: [0, 0, 5], fov: 75 });
+  // }, []);
 
   return (
     <Flex direction='column' position='fixed' width='100%' top='0' bottom='0' gap='2'>
@@ -94,7 +100,19 @@ const App: FC = () => {
         grow='1'
       >
         {range(0, rowNumberOfViewDivision * colNumberOfViewDivision - 1).map((index) => (
-          <ThreeDView key={index}/>
+          <ThreeDView
+            key={index}
+            orbitControl={(canvasRef) => (
+              <SharedOrbitControls
+                cameraState={cameraState}
+                updateCameraStateFn={(state) => {
+                  setCameraState(state);
+                }}
+                enabled={true}
+                canvasRef={canvasRef}
+              />
+            )}
+          />
         ))}
       </Grid>
     </Flex>

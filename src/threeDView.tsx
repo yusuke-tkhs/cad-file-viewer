@@ -19,8 +19,14 @@ const ThreeDView: FC = memo(() => {
       camera={cameraProps}
     >
       {/* 立方体のレンダリング */}
-      <OrbitControls zoomToCursor={true} enableDamping={true} dampingFactor={0.2} />
-      {/* <MyOrbitControls/> */}
+
+      <OrbitControls
+        zoomToCursor={true}
+        // OrbitControlsのdamping factorの設定はこれを参考にした
+        // https://ics.media/tutorial-three/camera_orbitcontrols/
+        enableDamping={true}
+        dampingFactor={0.2}
+      />
       <ambientLight intensity={0.5} />
       <pointLight position={[10, 10, 10]} />
       <mesh>

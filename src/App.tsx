@@ -9,8 +9,7 @@ const App: FC = () => {
   const [rowNumberOfViewDivision, serRowNumberOfViewDivision] = React.useState(1);
   const [colNumberOfViewDivision, setColNumberOfViewDivision] = React.useState(1);
   const numberOfViews = rowNumberOfViewDivision * colNumberOfViewDivision;
-  const [linksCameraPerspective, setLinksCameraPerspective] = React.useState(false);
-
+  const [syncCamera, setSyncCamera] = React.useState(false);
   const [cameraState, setCameraState] = React.useState<CameraState>(defaultCameraState);
   // React.useEffect(() => {
   //   setCameraState({ position: [0, 0, 5], fov: 75 });
@@ -81,8 +80,8 @@ const App: FC = () => {
             <DropdownMenu.Item>Custom division...</DropdownMenu.Item>
             <DropdownMenu.Separator />
             <DropdownMenu.CheckboxItem
-              checked={linksCameraPerspective}
-              onClick={() => setLinksCameraPerspective(!linksCameraPerspective)}
+              checked={syncCamera}
+              onClick={() => setSyncCamera(!syncCamera)}
             >
               Link perspective of cameras
             </DropdownMenu.CheckboxItem>
@@ -102,16 +101,15 @@ const App: FC = () => {
         {range(0, rowNumberOfViewDivision * colNumberOfViewDivision - 1).map((index) => (
           <ThreeDView
             key={index}
-            orbitControl={(canvasRef) => (
+            orbitControl={
               <SharedOrbitControls
                 cameraState={cameraState}
                 updateCameraStateFn={(state) => {
                   setCameraState(state);
                 }}
-                enabled={true}
-                canvasRef={canvasRef}
+                enableCameraSync={syncCamera}
               />
-            )}
+            }
           />
         ))}
       </Grid>

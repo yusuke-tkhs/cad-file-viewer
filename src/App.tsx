@@ -17,7 +17,7 @@ import {
 } from '@radix-ui/themes';
 import { PlusIcon } from '@radix-ui/react-icons';
 
-import ThreeDView from './threeDView';
+import ThreeDView from './ThreeDView';
 
 const TabView: FC<{ viewIndex: number; children: ReactNode }> = ({ viewIndex, children }) => {
   const [numberOfTabs, setNumberOfTabs] = React.useState(1);

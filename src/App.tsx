@@ -3,7 +3,6 @@ import { Flex, Button, Grid, Box, DropdownMenu } from '@radix-ui/themes';
 
 import ThreeDView from './ThreeDView';
 import range from './utility';
-import TabView from './TabView';
 
 const App: FC = () => {
   const [rowNumberOfViewDivision, serRowNumberOfViewDivision] = React.useState(1);
@@ -95,9 +94,7 @@ const App: FC = () => {
         grow='1'
       >
         {range(0, rowNumberOfViewDivision * colNumberOfViewDivision - 1).map((index) => (
-          <TabView key={index} viewIndex={index}>
-            <ThreeDView />
-          </TabView>
+          <ThreeDView key={index}/>
         ))}
       </Grid>
     </Flex>

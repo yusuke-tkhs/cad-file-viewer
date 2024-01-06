@@ -65,7 +65,9 @@ const CustomOrbitControls: FC<{
 
     // add event listener for 3D view specific event
     eventEmitterRef.current.on('recenterModel', ({ cameraLookAt, cameraDistance }) => {
-      console.log(operating);
+      // from this thread
+      // https://gamedev.stackexchange.com/questions/158177/how-to-move-the-camera-to-center-an-object-in-screen
+
       const [x, y, z] = cameraLookAt;
       if (syncCamera) {
         // When Syncing camera mode is ON,

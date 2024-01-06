@@ -2,7 +2,6 @@ import React, { FC } from 'react';
 import { Flex, Button, Grid, Box, DropdownMenu } from '@radix-ui/themes';
 
 import ThreeDView from './ThreeDView';
-import ThreeDViewMenuBar from './ThreeDViewMenuBar';
 import range from './utility';
 
 const App: FC = () => {
@@ -95,11 +94,7 @@ const App: FC = () => {
         grow='1'
       >
         {range(0, rowNumberOfViewDivision * colNumberOfViewDivision - 1).map((index) => (
-          <ThreeDView
-            key={index}
-            syncCamera={syncCamera}
-            toolBar={(meshRef) => <ThreeDViewMenuBar meshRef={meshRef} />}
-          />
+          <ThreeDView key={index} syncCamera={syncCamera} />
         ))}
       </Grid>
     </Flex>

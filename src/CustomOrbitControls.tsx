@@ -1,23 +1,11 @@
 import { FC, useRef, useState, useEffect } from 'react';
 import { useFrame, extend, useThree } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
-import { Euler, Quaternion, Vector3, OrthographicCamera as ThreeOrthographicCamera } from 'three';
+import { OrthographicCamera } from 'three';
+import { useRecoilState } from 'recoil';
+import { sharedCameraState } from './sharedCameraState';
 
 extend({ OrbitControls });
-
-export interface CameraState {
-  position: Vector3;
-  rotation: Euler;
-  quaternion: Quaternion;
-  zoom: number;
-}
-
-export const defaultCameraState: CameraState = {
-  position: new Vector3(0, 0, 5),
-  rotation: new Euler(0, 0, 0, 'XYZ'),
-  quaternion: new Quaternion(1, 1, 1, 1),
-  zoom: 1,
-};
 
 // Too many mouse wheel events make zoom peformance bad.
 // So throttle execution of mouse wheel event handler.
@@ -32,14 +20,11 @@ const throttledWheelHandler = (callback: (event: WheelEvent) => void, limit: num
   };
 };
 
-const WHEEL_EVENT_DEBOUNCE_TIME = 500;
-const WHEEL_EVENT_THROTTLE_TIME = 100;
+const WHEEL_EVENT_DEBOUNCE_TIME = 200;
+const WHEEL_EVENT_THROTTLE_TIME = 50;
 
-const SharedOrbitControls: FC<{
-  cameraState: CameraState;
-  updateCameraStateFn: (cameraState: CameraState) => void;
-  enableCameraSync: boolean;
-}> = ({ cameraState, updateCameraStateFn, enableCameraSync: enabled }) => {
+// OrbitControls which supports syncronization of cameras between multi canvases.
+const CustomOrbitControls: FC<{ syncCamera: boolean }> = ({ syncCamera }) => {
   const [orbitOperating, setOrbitOperating] = useState(false); // pan / rotate (mouse drag)
   const [zoomOperating, setZoomOperating] = useState(false); // zoom (mouse wheel)
   const operating = orbitOperating || zoomOperating;
@@ -48,25 +33,22 @@ const SharedOrbitControls: FC<{
     gl: { domElement },
   } = useThree();
   const debounceRef = useRef<number | null>(null);
+  const [sharedCamera, setCameraState] = useRecoilState(sharedCameraState);
 
   useEffect(() => {
-    if (!(camera instanceof ThreeOrthographicCamera)) {
+    if (!(camera instanceof OrthographicCamera)) {
       return;
     }
     const onWheel = () => {
       setZoomOperating(true);
-      updateCameraStateFn({
-        position: camera.position,
-        rotation: camera.rotation,
-        quaternion: camera.quaternion,
-        zoom: camera.zoom,
-      });
-
+      if (syncCamera) {
+        setCameraState(camera.clone());
+      }
       if (debounceRef.current !== null) {
         clearTimeout(debounceRef.current);
       }
       debounceRef.current = window.setTimeout(() => {
-        // ホイールイベント終了時の処理
+        // This function is executed when wheel operation is considered as finished.
         debounceRef.current = null;
         setZoomOperating(false);
       }, WHEEL_EVENT_DEBOUNCE_TIME);
@@ -79,8 +61,9 @@ const SharedOrbitControls: FC<{
   });
 
   useFrame(() => {
-    if (enabled && !operating) {
-      const { position, quaternion, rotation, zoom } = cameraState;
+    if (syncCamera && !operating) {
+      // const { position, quaternion, rotation, zoom } = sharedCamera;
+      const { position, quaternion, rotation, zoom } = sharedCamera;
       camera.position.set(position.x, position.y, position.z);
       camera.quaternion.set(quaternion.x, quaternion.y, quaternion.z, quaternion.w);
       camera.rotation.set(rotation.x, rotation.y, rotation.z);
@@ -101,14 +84,8 @@ const SharedOrbitControls: FC<{
         setOrbitOperating(false);
       }}
       onChange={(e) => {
-        if (operating && e?.target.object instanceof ThreeOrthographicCamera) {
-          const camera = e.target.object;
-          updateCameraStateFn({
-            position: camera.position,
-            rotation: camera.rotation,
-            quaternion: camera.quaternion,
-            zoom: camera.zoom,
-          });
+        if (operating && e?.target.object instanceof OrthographicCamera) {
+          setCameraState(e.target.object.clone());
         }
       }}
       camera={camera}
@@ -120,4 +97,4 @@ const SharedOrbitControls: FC<{
   );
 };
 
-export default SharedOrbitControls;
+export default CustomOrbitControls;

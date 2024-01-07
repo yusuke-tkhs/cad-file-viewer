@@ -1,11 +1,13 @@
 import { FC, useRef, useState, useEffect, MutableRefObject } from 'react';
 import { useFrame, extend, useThree } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
-import { OrthographicCamera } from 'three';
+import { OrthographicCamera, Box3, Vector3 } from 'three';
+import { OrbitControls as ThreeOrbitControls } from 'three/addons';
 import { useRecoilState } from 'recoil';
 import { sharedCameraState } from './sharedCameraState';
 import { Emitter } from 'mitt';
-import { ThreeDViewEvent } from './ThreeDViewEvent';
+import { ThreeDViewEvent } from '../ThreeDViewEvent';
+import {DEFAULT_CAMERA} from './defaultCamera'
 extend({ OrbitControls });
 
 // Too many mouse wheel events make zoom peformance bad.
@@ -23,7 +25,7 @@ const throttledWheelHandler = (callback: (event: WheelEvent) => void, limit: num
 
 const WHEEL_EVENT_DEBOUNCE_TIME = 200;
 const WHEEL_EVENT_THROTTLE_TIME = 50;
-const RECENTER_ZOOM_FACTOR = 2;
+const RECENTER_ZOOM_FACTOR = 1.5;
 
 // OrbitControls which supports syncronization of cameras between multi canvases.
 const CustomOrbitControls: FC<{
@@ -37,6 +39,7 @@ const CustomOrbitControls: FC<{
     camera,
     gl: { domElement },
   } = useThree();
+  const orbitControl = useRef<ThreeOrbitControls>(new ThreeOrbitControls(camera, domElement));
   const debounceRef = useRef<number | null>(null);
   const [sharedCamera, setCameraState] = useRecoilState(sharedCameraState);
 
@@ -64,26 +67,57 @@ const CustomOrbitControls: FC<{
     domElement.addEventListener('wheel', throttledHandleWheel);
 
     // add event listener for 3D view specific event
-    eventEmitterRef.current.on('recenterModel', ({ cameraLookAt, cameraDistance }) => {
-      // from this thread
-      // https://gamedev.stackexchange.com/questions/158177/how-to-move-the-camera-to-center-an-object-in-screen
+    eventEmitterRef.current.on('recenterModel', ({ scene }) => {
+      console.log('called!!!!!');
+      // const box = new Box3().setFromObject(scene);
+      // const size = box.getSize(new Vector3()).length();
+      // const center = box.getCenter(new Vector3());
+      // console.log(size);
+      // let newCamera = DEFAULT_CAMERA.clone()
+      // newCamera.position.copy(center);
+      // newCamera.position.x += size / 2.0;
+			// newCamera.position.y += size / 5.0;
+			// newCamera.position.z += size / 2.0;
+      // newCamera.lookAt(center);
+      // newCamera.updateProjectionMatrix();
+      // if (syncCamera) {
+      //   // When Syncing camera mode is ON,
+      //   // All cameras not operated by user should be updated
+      //   //   from shared camera state in useFrame.
+      //   // So, here we must not update camera directly.
+      //   setCameraState(newCamera);
+      // } else {
+      //   const { position, quaternion, rotation, zoom } = newCamera;
+      //   camera.position.copy(position);
+      //   camera.quaternion.copy(quaternion);;
+      //   camera.rotation.copy(rotation);
+      //   camera.zoom = zoom
+      //   camera.updateProjectionMatrix();
+      //   orbitControl.current.target.copy(center);
+      //   orbitControl.current.update();
+      //   orbitControl.current.saveState();
+        
+      //   // const actualCameraDistance = cameraDistance * 3;
+      //   // camera.position.set(x, y, z);
+      //   // camera.translateZ(-actualCameraDistance);
+      //   // camera.left = -frustumCubeHalfSize;
+      //   // camera.right = frustumCubeHalfSize;
+      //   // camera.top = frustumCubeHalfSize;
+      //   // camera.bottom = -frustumCubeHalfSize;
+      //   // camera.far = -actualCameraDistance - frustumCubeHalfSize;
+      //   // camera.near = -actualCameraDistance + frustumCubeHalfSize;
+        
+        
 
-      const [x, y, z] = cameraLookAt;
-      if (syncCamera) {
-        // When Syncing camera mode is ON,
-        // All cameras not operated by user should be updated
-        //   from shared camera state in useFrame.
-        // So, here we must not update camera directly.
-        const recenterdCamera = camera.clone();
-        recenterdCamera.position.set(x, y, z);
-        recenterdCamera.zoom = cameraDistance * RECENTER_ZOOM_FACTOR;
-        recenterdCamera.updateProjectionMatrix();
-        setCameraState(recenterdCamera);
-      } else {
-        camera.position.set(x, y, z);
-        camera.zoom = cameraDistance * RECENTER_ZOOM_FACTOR;
-        camera.updateProjectionMatrix();
-      }
+        
+      //   // // camera.zoom =100;
+      //   // orbitControl.current.update();
+      //   // //camera.position.set(x, y, z);
+        
+      //   // //camera.far = far;
+        
+      //   camera.updateProjectionMatrix();
+      // }
     });
 
     return () => {

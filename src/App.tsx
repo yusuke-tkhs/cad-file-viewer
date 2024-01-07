@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import { Flex, Button, Grid, Box, DropdownMenu } from '@radix-ui/themes';
 
-import ThreeDView from './ThreeDView';
+import ThreeDView from './ThreeDView/ThreeDView';
 import range from './utility';
 
 const App: FC = () => {

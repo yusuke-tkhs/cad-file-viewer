@@ -12,8 +12,6 @@ const TabView: FC<{ viewIndex: number; children: ReactNode }> = ({ viewIndex, ch
       <Tabs.Root
         defaultValue='1'
         onValueChange={(value) => {
-          console.log('Tabs.Root onValueChange');
-          console.log(value);
           setActiveTab(parseInt(value));
         }}
         style={{ width: '100%', height: '100%' }}

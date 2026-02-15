@@ -1,17 +1,20 @@
 import { FC, useRef, useState, useEffect, MutableRefObject, useCallback } from 'react';
 import { useFrame, extend, useThree } from '@react-three/fiber';
 import { OrbitControls, CameraControls } from '@react-three/drei';
-import { OrthographicCamera, Box3, Vector3, ConstantColorFactor, Sphere } from 'three';
-import { OrbitControls as ThreeOrbitControls } from 'three/addons';
+import { OrthographicCamera, Box3, Vector3, Sphere } from 'three';
 import { useRecoilState } from 'recoil';
 import { sharedCameraState } from './sharedCameraState';
 import { Emitter } from 'mitt';
 import { ThreeDViewEvent } from '../ThreeDViewEvent';
 extend({ OrbitControls });
 
-// Default frustum sizes from defaultCamera.ts
-const DEFAULT_FRUSTUM_WIDTH = 1980;
-const DEFAULT_FRUSTUM_HEIGHT = 1080;
+// カメラ同期用の変数
+// todo これを使った同期をやってみる
+const sharedCameraParams = {
+  position: new Vector3(0, 0, 0),
+  target: new Vector3(0, 0, 0),
+  zoom: 1,
+};
 
 // OrbitControls which supports syncronization of cameras between multi canvases.
 const CustomOrbitControls: FC<{
@@ -40,26 +43,8 @@ const CustomOrbitControls: FC<{
       console.log("saved zoom", zoom);
 
       setCameraState({ position: cameraControlsRef.current.camera.position.clone(), target: target.clone(), zoom });
-      // setCameraState({ position: cameraControlsRef.current.camera.position.clone(), target: target.clone() });
     }
   }, [cameraControlsRef, setCameraState]);
-
-  // const handleChangeCallBack = useCallback(() => {
-  //   // 1. 動いたら即座にフラグをオンにする
-  //   setOrbitOperating(true);
-
-  //   // 2. 前回のタイマーがあればキャンセル（連続して発火している間はオフにさせない）
-  //   if (changeTimeoutRef.current) {
-  //     clearTimeout(changeTimeoutRef.current);
-  //   }
-
-  //   // 3. 100ms間、次の呼び出しがなければフラグをオフにする
-  //   changeTimeoutRef.current = window.setTimeout(() => {
-  //     console.log('ズーム（距離）が変更されました2:');
-  //     setOrbitOperating(false);
-  //     changeTimeoutRef.current = null; // 掃除
-  //   }, 50);
-  // }, [setOrbitOperating]);
 
   // 前回の距離を保持するための Ref
   const lastDistanceRef = useRef(0)
@@ -71,8 +56,9 @@ const CustomOrbitControls: FC<{
     const currentZoom = cameraControlsRef.current.camera.zoom;
 
     // 前回と異なる場合のみ処理を実行（誤差を考慮して差分で判定すると安定します）
-    if (Math.abs(lastDistanceRef.current - currentZoom) > 0.001) {
-      console.log('ズーム（距離）が変更されました:', currentZoom)
+    if (syncCamera && Math.abs(lastDistanceRef.current - currentZoom) > 0.0001) {
+      // console.log('ズーム（距離）が変更されました:', currentZoom)
+      
       
       // ここにズーム時の処理を書く（例: setZoomOperating(true) など）
       setOrbitOperating(true);
@@ -80,15 +66,16 @@ const CustomOrbitControls: FC<{
         clearTimeout(changeTimeoutRef.current);
       }
       changeTimeoutRef.current = window.setTimeout(() => {
-        // console.log('ズーム（距離）が変更されました2:');
+        // console.log('ズーム（距離）が変更されました:');
         setOrbitOperating(false);
         changeTimeoutRef.current = null; // 掃除
-      }, 500);
+      }, 150);
 
       // 値を更新
       lastDistanceRef.current = currentZoom
+
     }
-  }, [])
+  }, [syncCamera, cameraControlsRef])
 
 
   useEffect(() => {
@@ -119,28 +106,10 @@ const CustomOrbitControls: FC<{
     };
   }, [camera, domElement, eventEmitterRef, syncCamera, saveCameraState]);
 
-  // useEffect(() => {
-  //   if (cameraControlsRef.current) {
-  //     const handleUpdate = () => {
-  //       console.log('カメラが更新されました（ズーム含む）');
-  //       if (syncCamera && !orbitOperating) {
-  //         saveCameraState();
-  //       }
-  //     };
-
-  //     cameraControlsRef.current.addEventListener('update', handleUpdate);
-
-  //     return () => {
-  //       cameraControlsRef.current?.removeEventListener('update', handleUpdate);
-  //     };
-  //   }
-  // }, [cameraControlsRef, syncCamera, orbitOperating, saveCameraState]);
-
   useFrame(() => {
     if (orbitOperating && syncCamera && camera instanceof OrthographicCamera) {
       saveCameraState();
-    } else 
-    if (syncCamera && !orbitOperating && sharedCamera && cameraControlsRef.current) {
+    } else if (syncCamera && !orbitOperating && sharedCamera && cameraControlsRef.current) {
     // if (syncCamera && !orbitOperating && sharedCamera && cameraControlsRef.current) {
       const { position, target, zoom } = sharedCamera;
       cameraControlsRef.current.setPosition(position.x, position.y, position.z);
@@ -164,7 +133,6 @@ const CustomOrbitControls: FC<{
         console.log('camera onEnd');
         setOrbitOperating(false);
       }}
-      // onChange={handleChangeCallBack}
       onChange={()=>{
         handleChange();
       }}

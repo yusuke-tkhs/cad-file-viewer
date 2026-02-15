@@ -1,7 +1,7 @@
-import { FC, useRef, useState, useEffect, MutableRefObject } from 'react';
+import { FC, useRef, useState, useEffect, MutableRefObject, useCallback } from 'react';
 import { useFrame, extend, useThree } from '@react-three/fiber';
-import { OrbitControls } from '@react-three/drei';
-import { OrthographicCamera, Box3, Vector3, ConstantColorFactor } from 'three';
+import { OrbitControls, CameraControls } from '@react-three/drei';
+import { OrthographicCamera, Box3, Vector3, ConstantColorFactor, Sphere } from 'three';
 import { OrbitControls as ThreeOrbitControls } from 'three/addons';
 import { useRecoilState } from 'recoil';
 import { sharedCameraState } from './sharedCameraState';
@@ -19,12 +19,77 @@ const CustomOrbitControls: FC<{
   eventEmitterRef: MutableRefObject<Emitter<ThreeDViewEvent>>;
 }> = ({ syncCamera, eventEmitterRef }) => {
   const [orbitOperating, setOrbitOperating] = useState(false);
+  const [zoomOperating, setZoomOperating] = useState(false);
   const {
     camera,
     gl: { domElement },
   } = useThree();
-  const orbitControl = useRef<ThreeOrbitControls>(new ThreeOrbitControls(camera, domElement));
+  const changeTimeoutRef = useRef<number | null>(null);
+  const cameraControlsRef = useRef<CameraControls>(null);
   const [sharedCamera, setCameraState] = useRecoilState(sharedCameraState);
+  const saveCameraState = useCallback(() => {
+    if (cameraControlsRef.current) {
+
+      console.log("called!!! saveCameraState");
+      // カメラの視線を取得
+      let target = new Vector3();
+      cameraControlsRef.current.getTarget(target);
+
+      // // カメラのズームを取得
+      const zoom = cameraControlsRef.current.camera.zoom;
+      console.log("saved zoom", zoom);
+
+      setCameraState({ position: cameraControlsRef.current.camera.position.clone(), target: target.clone(), zoom });
+      // setCameraState({ position: cameraControlsRef.current.camera.position.clone(), target: target.clone() });
+    }
+  }, [cameraControlsRef, setCameraState]);
+
+  // const handleChangeCallBack = useCallback(() => {
+  //   // 1. 動いたら即座にフラグをオンにする
+  //   setOrbitOperating(true);
+
+  //   // 2. 前回のタイマーがあればキャンセル（連続して発火している間はオフにさせない）
+  //   if (changeTimeoutRef.current) {
+  //     clearTimeout(changeTimeoutRef.current);
+  //   }
+
+  //   // 3. 100ms間、次の呼び出しがなければフラグをオフにする
+  //   changeTimeoutRef.current = window.setTimeout(() => {
+  //     console.log('ズーム（距離）が変更されました2:');
+  //     setOrbitOperating(false);
+  //     changeTimeoutRef.current = null; // 掃除
+  //   }, 50);
+  // }, [setOrbitOperating]);
+
+  // 前回の距離を保持するための Ref
+  const lastDistanceRef = useRef(0)
+
+  const handleChange = useCallback(() => {
+    if (!cameraControlsRef.current) return
+
+    // 現在のカメラとターゲットの距離を取得
+    const currentZoom = cameraControlsRef.current.camera.zoom;
+
+    // 前回と異なる場合のみ処理を実行（誤差を考慮して差分で判定すると安定します）
+    if (Math.abs(lastDistanceRef.current - currentZoom) > 0.001) {
+      console.log('ズーム（距離）が変更されました:', currentZoom)
+      
+      // ここにズーム時の処理を書く（例: setZoomOperating(true) など）
+      setOrbitOperating(true);
+      if (changeTimeoutRef.current) {
+        clearTimeout(changeTimeoutRef.current);
+      }
+      changeTimeoutRef.current = window.setTimeout(() => {
+        // console.log('ズーム（距離）が変更されました2:');
+        setOrbitOperating(false);
+        changeTimeoutRef.current = null; // 掃除
+      }, 500);
+
+      // 値を更新
+      lastDistanceRef.current = currentZoom
+    }
+  }, [])
+
 
   useEffect(() => {
     if (!(camera instanceof OrthographicCamera)) {
@@ -36,65 +101,15 @@ const CustomOrbitControls: FC<{
     // add event listener for 3D view specific event
     eventEmitterRef.current.on('recenterModel', ({ scene }) => {
       console.log('recenter called');
-      // const box = new Box3().setFromObject(scene);
-      // const size = box.getSize(new Vector3());
-      // console.log('box size:', size);
-
-      // // Centerコンポーネントでモデルが中央に配置されているので、targetは(0,0,0)
-      // const maxDim = Math.max(size.x, size.y, size.z);
-      // console.log('maxDim:', maxDim);
-      // const aspect = DEFAULT_FRUSTUM_WIDTH / DEFAULT_FRUSTUM_HEIGHT;
-
-      // // モデルが収まるようにzoomを計算
-      // const zoomX = DEFAULT_FRUSTUM_WIDTH / (maxDim * aspect);
-      // const zoomY = DEFAULT_FRUSTUM_HEIGHT / maxDim;
-      // const zoom = Math.min(zoomX, zoomY) * 0.9; // 少し余裕を持たせる
-      // console.log('zoom:', zoom);
-
-      // // カメラの位置を固定
-      // camera.position.set(0, maxDim * 10, 0);
-      // console.log('camera position:', camera.position);
-
-      // // zoomを設定
-      // camera.zoom = zoom;
-      // camera.updateProjectionMatrix();
-
-      // orbitControl.current.target.set(0, 0, 0);
-      // console.log('target:', orbitControl.current.target);
-      // orbitControl.current.update();
-      // orbitControl.current.saveState();
-
       const box = new Box3().setFromObject(scene);
-
-      // 視点をモデルの中心に向ける
-      const center = new Vector3();
-      box.getCenter(center);
-      camera.lookAt(center);
-      console.log('center:', center);
-
-      // モデルが収まるようにzoomを計算
-      const size = box.getSize(new Vector3());
-      const maxDim = Math.max(size.x, size.y, size.z);
-      const aspect = DEFAULT_FRUSTUM_WIDTH / DEFAULT_FRUSTUM_HEIGHT;
-      const zoomX = DEFAULT_FRUSTUM_WIDTH / (maxDim * aspect);
-      const zoomY = DEFAULT_FRUSTUM_HEIGHT / maxDim;
-      const zoom = Math.min(zoomX, zoomY) * 0.9; // 少し余裕を持たせる
-      console.log('zoom:', zoom);
-      camera.zoom = zoom;
-
-      // カメラの位置を固定
-      // camera.position.set(0, maxDim * 10, 0);
-      // console.log('camera position:', camera.position);
-
-      camera.updateProjectionMatrix();
-
-      orbitControl.current.target.set(0, 0, 0);
-      console.log('target:', orbitControl.current.target);
-      orbitControl.current.update();
-      orbitControl.current.saveState();
+      const boundingSphere = new Sphere();
+      box.getBoundingSphere(boundingSphere);  // ボックスからスフィアを計算
+      cameraControlsRef.current?.fitToSphere(boundingSphere, true); // スフィアにフィットさせる
+      
+      console.log('fit to box done');
 
       if (syncCamera) {
-        setCameraState({ camera: camera.clone(), target: orbitControl.current.target.clone() });
+        saveCameraState();
       }
     });
 
@@ -102,38 +117,59 @@ const CustomOrbitControls: FC<{
       domElement.removeEventListener('contextmenu', (e) => e.preventDefault());
       eventEmitterRef.current.off('recenterModel');
     };
-  });
+  }, [camera, domElement, eventEmitterRef, syncCamera, saveCameraState]);
+
+  // useEffect(() => {
+  //   if (cameraControlsRef.current) {
+  //     const handleUpdate = () => {
+  //       console.log('カメラが更新されました（ズーム含む）');
+  //       if (syncCamera && !orbitOperating) {
+  //         saveCameraState();
+  //       }
+  //     };
+
+  //     cameraControlsRef.current.addEventListener('update', handleUpdate);
+
+  //     return () => {
+  //       cameraControlsRef.current?.removeEventListener('update', handleUpdate);
+  //     };
+  //   }
+  // }, [cameraControlsRef, syncCamera, orbitOperating, saveCameraState]);
 
   useFrame(() => {
-    console.log('orbitOperating:', orbitOperating);
-    console.log('sharedCamera:', sharedCamera);
     if (orbitOperating && syncCamera && camera instanceof OrthographicCamera) {
-      setCameraState({ camera: camera.clone(), target: orbitControl.current.target.clone() });
-    } else if (syncCamera && !orbitOperating && sharedCamera) {
-      console.log('syncing camera');
-      const { camera: sharedCam, target } = sharedCamera;
-      camera.position.copy(sharedCam.position);
-      camera.quaternion.copy(sharedCam.quaternion);
-      camera.zoom = sharedCam.zoom;
-      orbitControl.current.target.copy(target);
-      orbitControl.current.update();
-      camera.updateProjectionMatrix();
+      saveCameraState();
+    } else 
+    if (syncCamera && !orbitOperating && sharedCamera && cameraControlsRef.current) {
+    // if (syncCamera && !orbitOperating && sharedCamera && cameraControlsRef.current) {
+      const { position, target, zoom } = sharedCamera;
+      cameraControlsRef.current.setPosition(position.x, position.y, position.z);
+      cameraControlsRef.current.setTarget(target.x, target.y, target.z);
+      cameraControlsRef.current.zoomTo(zoom, true);
+    }
+    if (cameraControlsRef.current) {
+      cameraControlsRef.current.update(1);
     }
   });
 
   return (
-    <OrbitControls
+    <CameraControls
+      ref={cameraControlsRef}
       domElement={domElement}
       onStart={() => {
+        console.log('camera onStart');
         setOrbitOperating(true);
       }}
       onEnd={() => {
+        console.log('camera onEnd');
         setOrbitOperating(false);
       }}
+      // onChange={handleChangeCallBack}
+      onChange={()=>{
+        handleChange();
+      }}
       camera={camera}
-      enableDamping={false}
-      enablePan={true}
-      zoomToCursor={true}
+      makeDefault
     />
   );
 };

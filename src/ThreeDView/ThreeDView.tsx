@@ -57,8 +57,6 @@ type ModelBoundingSphere = {
 const ThreeDView: FC<{ syncCamera: boolean }> = memo(({ syncCamera }) => {
   // const [modelBlob, setModelBlob] = useState<Uint8Array | null>(null);
   const [modelGltf, setModelGltf] = useState<GLTF | null>(null);
-  const boundingSphereRef = useRef<ModelBoundingSphere | null>(null); // use for recenter camera to model
-  const meshRef = useRef<MeshRefContent>(null);
 
   const eventEmitter = useRef(mitt<ThreeDViewEvent>());
   const recenterHandler = () => {
@@ -67,12 +65,6 @@ const ThreeDView: FC<{ syncCamera: boolean }> = memo(({ syncCamera }) => {
       scene: modelGltf.scene
     });
   };
-
-  useEffect(() => {
-    if (modelGltf) {
-      recenterHandler();
-    }
-  }, [modelGltf]);
 
   useEffect(() => {
     if (modelGltf) {

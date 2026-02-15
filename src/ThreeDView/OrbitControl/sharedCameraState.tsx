@@ -1,7 +1,7 @@
 import { atom } from 'recoil';
-import {DEFAULT_CAMERA} from './defaultCamera'
+import { OrthographicCamera, Vector3 } from 'three';
 
-export const sharedCameraState = atom({
+export const sharedCameraState = atom<{ camera: OrthographicCamera; target: Vector3 } | null>({
   key: 'sharedCameraState',
-  default: DEFAULT_CAMERA,
+  default: null,
 });

@@ -1,6 +1,6 @@
 import { FC, memo, useRef, Suspense, useState, useEffect, MutableRefObject } from 'react';
 import { Canvas, useLoader } from '@react-three/fiber';
-import { Edges, Box, useGLTF } from '@react-three/drei';
+import { useGLTF, Center } from '@react-three/drei';
 import { Flex, Button, Tooltip, IconButton } from '@radix-ui/themes';
 import {FileIcon} from '@radix-ui/react-icons'
 import { MeshRefContent } from './meshRef';
@@ -62,32 +62,23 @@ const ThreeDView: FC<{ syncCamera: boolean }> = memo(({ syncCamera }) => {
 
   const eventEmitter = useRef(mitt<ThreeDViewEvent>());
   const recenterHandler = () => {
-    // const mesh = meshRef.current;
-    // if (!mesh) {
-    //   return;
-    // }
-    // mesh.geometry.computeBoundingSphere();
-    // const boundingSphere = mesh.geometry.boundingSphere;
-    // if (!boundingSphere) {
-    //   return;
-    // }
-    // eventEmitter.current.emit('recenterModel', {
-    //   cameraLookAt: mesh.localToWorld(boundingSphere.center),
-    //   cameraDistance: boundingSphere.radius,
-    // });
-    // console.log('gltf effect');
-    // if(!modelGltf){return};
-    // console.log('gltf effect2');
-    // const scene = modelGltf.scene;
-    // const bbox = new Box3().setFromObject(scene);
-    // const boundingSphere = new Sphere();
-    // bbox.getBoundingSphere(boundingSphere);
-    // console.log(boundingSphere.radius);
     if(!modelGltf){return;}
     eventEmitter.current.emit('recenterModel', {
       scene: modelGltf.scene
     });
   };
+
+  useEffect(() => {
+    if (modelGltf) {
+      recenterHandler();
+    }
+  }, [modelGltf]);
+
+  useEffect(() => {
+    if (modelGltf) {
+      recenterHandler();
+    }
+  }, [modelGltf]);
 
   return (
     <Flex direction='column'>
@@ -101,10 +92,6 @@ const ThreeDView: FC<{ syncCamera: boolean }> = memo(({ syncCamera }) => {
             const blob = new Uint8Array(await invoke('read_file_as_bytes', {path: filePath}));
             console.log('blob get');
             console.log(blob);
-            // setModelBlob(blob);
-            // const dracoLoader = new DRACOLoader().setDecoderPath('three/examples/jsm/libs/draco/');
-            // const dracoLoader = new DRACOLoader().setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/').preload();
-            // const gltfLoader = new GLTFLoader().setDRACOLoader(dracoLoader);
             const gltfLoader = new GLTFLoader(MANAGER)
               .setCrossOrigin('anonymous')
               .setDRACOLoader(DRACO_LOADER)
@@ -135,29 +122,17 @@ const ThreeDView: FC<{ syncCamera: boolean }> = memo(({ syncCamera }) => {
         </Tooltip>
       </Flex>
 
-      {/* 3d model view*/}
       <Canvas
         style={{ background: 'white', width: '100%', height: '100%', flexGrow: 1 }}
         orthographic
       >
-        
         <CustomOrbitControls syncCamera={syncCamera} eventEmitterRef={eventEmitter} />
-        <ambientLight intensity={0.5} />
+        <ambientLight intensity={0.8} />
+        <directionalLight position={[10, 10, 10]} intensity={1} />
         <pointLight position={[10, 10, 10]} />
-        {/* render sample duck */}
-        <Suspense>
-          {/* {modelBlob != null && <GltfModel modelBlob={modelBlob} boundingSphereRef={boundingSphereRef} />} */}
-          {modelGltf != null && <primitive object={modelGltf.scene} />}
+        <Suspense fallback={<div>Loading...</div>}>
+          {modelGltf != null && <Center><primitive object={modelGltf.scene} /></Center>}
         </Suspense>
-        
-
-        {/* <mesh ref={meshRef}>
-          <boxGeometry args={[10, 10, 10]} />
-          <meshStandardMaterial attach='material' color='green' />
-          <Edges>
-            <Box args={[1, 1, 1]} />
-          </Edges>
-        </mesh> */}
       </Canvas>
     </Flex>
   );

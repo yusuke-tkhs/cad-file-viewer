@@ -9,7 +9,6 @@ import { ThreeDViewEvent } from '../ThreeDViewEvent';
 extend({ OrbitControls });
 
 // カメラ同期用の変数
-// todo これを使った同期をやってみる
 const sharedCameraParams = {
   position: new Vector3(0, 0, 0),
   target: new Vector3(0, 0, 0),
@@ -22,14 +21,22 @@ const CustomOrbitControls: FC<{
   eventEmitterRef: MutableRefObject<Emitter<ThreeDViewEvent>>;
 }> = ({ syncCamera, eventEmitterRef }) => {
   const [orbitOperating, setOrbitOperating] = useState(false);
-  const [zoomOperating, setZoomOperating] = useState(false);
   const {
     camera,
     gl: { domElement },
   } = useThree();
+
+  useEffect(() => {
+    if (camera instanceof OrthographicCamera) {
+      // 前後の描画限界を十分に広げる（数値はモデルの大きさに合わせて調整）
+      camera.near = -10000; 
+      camera.far = 10000;
+      camera.updateProjectionMatrix();
+    }
+  }, [camera]);
+
   const changeTimeoutRef = useRef<number | null>(null);
   const cameraControlsRef = useRef<CameraControls>(null);
-  const [sharedCamera, setCameraState] = useRecoilState(sharedCameraState);
   const saveCameraState = useCallback(() => {
     if (cameraControlsRef.current) {
 
@@ -38,25 +45,25 @@ const CustomOrbitControls: FC<{
       let target = new Vector3();
       cameraControlsRef.current.getTarget(target);
 
-      // // カメラのズームを取得
-      const zoom = cameraControlsRef.current.camera.zoom;
-      console.log("saved zoom", zoom);
-
-      setCameraState({ position: cameraControlsRef.current.camera.position.clone(), target: target.clone(), zoom });
+      sharedCameraParams.position.copy(cameraControlsRef.current.camera.position);
+      sharedCameraParams.target.copy(target);
+      sharedCameraParams.zoom = cameraControlsRef.current.camera.zoom;
     }
-  }, [cameraControlsRef, setCameraState]);
+  }, [cameraControlsRef]);
 
   // 前回の距離を保持するための Ref
   const lastDistanceRef = useRef(0)
 
   const handleChange = useCallback(() => {
-    if (!cameraControlsRef.current) return
+    if (!cameraControlsRef.current) {
+      return;
+    }
 
     // 現在のカメラとターゲットの距離を取得
     const currentZoom = cameraControlsRef.current.camera.zoom;
 
     // 前回と異なる場合のみ処理を実行（誤差を考慮して差分で判定すると安定します）
-    if (syncCamera && Math.abs(lastDistanceRef.current - currentZoom) > 0.0001) {
+    if (Math.abs(lastDistanceRef.current - currentZoom) > 0.0001) {
       // console.log('ズーム（距離）が変更されました:', currentZoom)
       
       
@@ -75,7 +82,7 @@ const CustomOrbitControls: FC<{
       lastDistanceRef.current = currentZoom
 
     }
-  }, [syncCamera, cameraControlsRef])
+  }, [cameraControlsRef])
 
 
   useEffect(() => {
@@ -94,10 +101,6 @@ const CustomOrbitControls: FC<{
       cameraControlsRef.current?.fitToSphere(boundingSphere, true); // スフィアにフィットさせる
       
       console.log('fit to box done');
-
-      if (syncCamera) {
-        saveCameraState();
-      }
     });
 
     return () => {
@@ -106,18 +109,21 @@ const CustomOrbitControls: FC<{
     };
   }, [camera, domElement, eventEmitterRef, syncCamera, saveCameraState]);
 
-  useFrame(() => {
-    if (orbitOperating && syncCamera && camera instanceof OrthographicCamera) {
+  useFrame((state, delta) => {
+
+    if (orbitOperating && camera instanceof OrthographicCamera) {
       saveCameraState();
-    } else if (syncCamera && !orbitOperating && sharedCamera && cameraControlsRef.current) {
-    // if (syncCamera && !orbitOperating && sharedCamera && cameraControlsRef.current) {
-      const { position, target, zoom } = sharedCamera;
-      cameraControlsRef.current.setPosition(position.x, position.y, position.z);
-      cameraControlsRef.current.setTarget(target.x, target.y, target.z);
-      cameraControlsRef.current.zoomTo(zoom, true);
+    } else if (syncCamera && !orbitOperating && cameraControlsRef.current) {
+      const { position, target, zoom } = sharedCameraParams;
+      cameraControlsRef.current.setLookAt(
+        position.x, position.y, position.z,
+        target.x, target.y, target.z,
+        false // アニメーションさせない
+      );
+      cameraControlsRef.current.zoomTo(zoom, false); // アニメーションさせない
     }
     if (cameraControlsRef.current) {
-      cameraControlsRef.current.update(1);
+      cameraControlsRef.current.update(delta);
     }
   });
 

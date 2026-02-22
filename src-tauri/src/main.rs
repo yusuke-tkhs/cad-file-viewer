@@ -18,6 +18,7 @@ fn main() {
     
     // here `"quit".to_string()` defines the menu item id, and the second parameter is the menu item label.
     tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init()) 
         .invoke_handler(tauri::generate_handler![read_file_as_bytes])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

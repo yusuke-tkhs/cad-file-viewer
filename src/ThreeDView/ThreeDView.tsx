@@ -29,30 +29,30 @@ const KTX2_LOADER = new KTX2Loader(MANAGER).setTranscoderPath(
 );
 
 
-const GltfModel: FC<{modelBlob: Uint8Array, boundingSphereRef: MutableRefObject<ModelBoundingSphere | null>}> = ({modelBlob, boundingSphereRef}) => {
-  // const gltf = useLoader(GLTFLoader, URL.createObjectURL(new Blob([modelBlob],{ type: 'model/gltf-binary'})));
-  const gltf = useGLTF(URL.createObjectURL(new Blob([modelBlob],{ type: 'model/gltf-binary'})), true);
-  useEffect(()=>{
-    const scene = gltf.scene;
+// const GltfModel: FC<{modelBlob: Uint8Array, boundingSphereRef: MutableRefObject<ModelBoundingSphere | null>}> = ({modelBlob, boundingSphereRef}) => {
+//   // const gltf = useLoader(GLTFLoader, URL.createObjectURL(new Blob([modelBlob],{ type: 'model/gltf-binary'})));
+//   const gltf = useGLTF(URL.createObjectURL(new Blob([modelBlob],{ type: 'model/gltf-binary'})), true);
+//   useEffect(()=>{
+//     const scene = gltf.scene;
 
-    // バウンディングボックスを初期化
-    const bbox = new Box3().setFromObject(scene);
+//     // バウンディングボックスを初期化
+//     const bbox = new Box3().setFromObject(scene);
 
-    // バウンディングスフィアを計算
-    const boundingSphere = new Sphere();
-    bbox.getBoundingSphere(boundingSphere); 
-    boundingSphereRef.current = {
-      centerInWorld: scene.localToWorld(boundingSphere.center),
-      radius: boundingSphere.radius
-    };
-  },[gltf])
-  return <primitive object={gltf.scene} />;
-}
+//     // バウンディングスフィアを計算
+//     const boundingSphere = new Sphere();
+//     bbox.getBoundingSphere(boundingSphere); 
+//     boundingSphereRef.current = {
+//       centerInWorld: scene.localToWorld(boundingSphere.center),
+//       radius: boundingSphere.radius
+//     };
+//   },[gltf])
+//   return <primitive object={gltf.scene} />;
+// }
 
-type ModelBoundingSphere = {
-  centerInWorld: Vector3;
-  radius: number;
-}
+// type ModelBoundingSphere = {
+//   centerInWorld: Vector3;
+//   radius: number;
+// }
 
 const ThreeDView: FC<{ syncCamera: boolean }> = memo(({ syncCamera }) => {
   // const [modelBlob, setModelBlob] = useState<Uint8Array | null>(null);

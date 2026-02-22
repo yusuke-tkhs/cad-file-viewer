@@ -1,7 +1,7 @@
 import { FC, useRef, useState, useEffect, useCallback, RefObject } from 'react';
 import { useFrame, extend, useThree } from '@react-three/fiber';
 import { OrbitControls, CameraControls } from '@react-three/drei';
-import { OrthographicCamera, Box3, Vector3, Sphere } from 'three';
+import { OrthographicCamera, Box3, Vector3, Sphere, Quaternion } from 'three';
 import { useRecoilState } from 'recoil';
 import { sharedCameraState } from './sharedCameraState';
 import { Emitter } from 'mitt';
@@ -10,15 +10,16 @@ import { ThreeDViewEvent } from '../ThreeDViewEvent';
 // カメラ同期用の変数
 const sharedCameraParams = {
   position: new Vector3(0, 0, 0),
-  target: new Vector3(0, 0, 0),
+  quaternion: new Quaternion(),
   zoom: 1,
 };
 
 // OrbitControls which supports syncronization of cameras between multi canvases.
 const CustomOrbitControls: FC<{
   syncCamera: boolean;
+  viewId: string;
   eventEmitterRef: RefObject<Emitter<ThreeDViewEvent>>;
-}> = ({ syncCamera, eventEmitterRef }) => {
+}> = ({ syncCamera, viewId, eventEmitterRef }) => {
   const [orbitOperating, setOrbitOperating] = useState(false);
   const {
     camera,
@@ -38,14 +39,8 @@ const CustomOrbitControls: FC<{
   const cameraControlsRef = useRef<CameraControls>(null);
   const saveCameraState = useCallback(() => {
     if (cameraControlsRef.current) {
-
-      console.log("called!!! saveCameraState");
-      // カメラの視線を取得
-      let target = new Vector3();
-      cameraControlsRef.current.getTarget(target);
-
       sharedCameraParams.position.copy(cameraControlsRef.current.camera.position);
-      sharedCameraParams.target.copy(target);
+      sharedCameraParams.quaternion.copy(cameraControlsRef.current.camera.quaternion);
       sharedCameraParams.zoom = cameraControlsRef.current.camera.zoom;
     }
   }, [cameraControlsRef]);
@@ -109,20 +104,14 @@ const CustomOrbitControls: FC<{
   }, [camera, domElement, eventEmitterRef, syncCamera, saveCameraState]);
 
   useFrame((state, delta) => {
-    if (orbitOperating && camera instanceof OrthographicCamera) {
+    if (orbitOperating && camera instanceof OrthographicCamera && cameraControlsRef.current) {
       saveCameraState();
     } else if (syncCamera && !orbitOperating && cameraControlsRef.current) {
-      const { position, target, zoom } = sharedCameraParams;
-      cameraControlsRef.current.setLookAt(
-        position.x, position.y, position.z,
-        target.x, target.y, target.z,
-        false // アニメーションさせない
-      );
-      cameraControlsRef.current.zoomTo(zoom, false); // アニメーションさせない
-      // cameraControlsRef.current.
-    }
-    if (cameraControlsRef.current) {
-      cameraControlsRef.current.update(delta);
+      const { position, zoom, quaternion } = sharedCameraParams;
+      cameraControlsRef.current.camera.position.copy(position);
+      cameraControlsRef.current.camera.quaternion.copy(quaternion);
+      cameraControlsRef.current.camera.zoom = zoom;
+      cameraControlsRef.current.camera.updateProjectionMatrix();
     }
   });
 

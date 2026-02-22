@@ -54,7 +54,7 @@ const KTX2_LOADER = new KTX2Loader(MANAGER).setTranscoderPath(
 //   radius: number;
 // }
 
-const ThreeDView: FC<{ syncCamera: boolean }> = memo(({ syncCamera }) => {
+const ThreeDView: FC<{ syncCamera: boolean, viewId: string }> = memo(({ syncCamera, viewId }) => {
   // const [modelBlob, setModelBlob] = useState<Uint8Array | null>(null);
   const [modelGltf, setModelGltf] = useState<GLTF | null>(null);
 
@@ -116,9 +116,11 @@ const ThreeDView: FC<{ syncCamera: boolean }> = memo(({ syncCamera }) => {
 
       <Canvas
         style={{ background: 'white', width: '100%', height: '100%', flexGrow: 1 }}
+        frameloop='demand'
+        dpr={[1, 1.5]}
         orthographic
       >
-        <CustomOrbitControls syncCamera={syncCamera} eventEmitterRef={eventEmitter} />
+        <CustomOrbitControls syncCamera={syncCamera} viewId={viewId} eventEmitterRef={eventEmitter} />
         <ambientLight intensity={0.8} />
         <directionalLight position={[10, 10, 10]} intensity={1} />
         <pointLight position={[10, 10, 10]} />

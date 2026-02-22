@@ -91,10 +91,10 @@ const App: FC = () => {
         width='100%'
         height='100%'
         top='auto'
-        grow='1'
+        style={{ flexGrow: 1 }}
       >
         {range(0, rowNumberOfViewDivision * colNumberOfViewDivision - 1).map((index) => (
-          <ThreeDView key={index} syncCamera={syncCamera} />
+          <ThreeDView key={index} viewId={index.toString()} syncCamera={syncCamera} />
         ))}
       </Grid>
     </Flex>

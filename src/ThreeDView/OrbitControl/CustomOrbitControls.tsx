@@ -1,4 +1,4 @@
-import { FC, useRef, useState, useEffect, MutableRefObject, useCallback } from 'react';
+import { FC, useRef, useState, useEffect, useCallback, RefObject } from 'react';
 import { useFrame, extend, useThree } from '@react-three/fiber';
 import { OrbitControls, CameraControls } from '@react-three/drei';
 import { OrthographicCamera, Box3, Vector3, Sphere } from 'three';
@@ -6,7 +6,6 @@ import { useRecoilState } from 'recoil';
 import { sharedCameraState } from './sharedCameraState';
 import { Emitter } from 'mitt';
 import { ThreeDViewEvent } from '../ThreeDViewEvent';
-extend({ OrbitControls });
 
 // カメラ同期用の変数
 const sharedCameraParams = {
@@ -18,7 +17,7 @@ const sharedCameraParams = {
 // OrbitControls which supports syncronization of cameras between multi canvases.
 const CustomOrbitControls: FC<{
   syncCamera: boolean;
-  eventEmitterRef: MutableRefObject<Emitter<ThreeDViewEvent>>;
+  eventEmitterRef: RefObject<Emitter<ThreeDViewEvent>>;
 }> = ({ syncCamera, eventEmitterRef }) => {
   const [orbitOperating, setOrbitOperating] = useState(false);
   const {

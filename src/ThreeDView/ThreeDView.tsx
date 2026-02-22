@@ -5,8 +5,8 @@ import { Flex, Button, Tooltip, IconButton } from '@radix-ui/themes';
 import {FileIcon} from '@radix-ui/react-icons'
 import { MeshRefContent } from './meshRef';
 import CustomOrbitControls from './OrbitControl/CustomOrbitControls';
-import { open } from '@tauri-apps/api/dialog';
-import { invoke } from '@tauri-apps/api/tauri';
+import { open } from '@tauri-apps/plugin-dialog';
+import { invoke } from '@tauri-apps/api/core';
 import { GLTF, GLTFLoader, DRACOLoader, KTX2Loader } from 'three/addons';
 
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';

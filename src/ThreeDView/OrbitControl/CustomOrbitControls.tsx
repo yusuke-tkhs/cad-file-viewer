@@ -110,7 +110,6 @@ const CustomOrbitControls: FC<{
   }, [camera, domElement, eventEmitterRef, syncCamera, saveCameraState]);
 
   useFrame((state, delta) => {
-
     if (orbitOperating && camera instanceof OrthographicCamera) {
       saveCameraState();
     } else if (syncCamera && !orbitOperating && cameraControlsRef.current) {
@@ -121,6 +120,7 @@ const CustomOrbitControls: FC<{
         false // アニメーションさせない
       );
       cameraControlsRef.current.zoomTo(zoom, false); // アニメーションさせない
+      // cameraControlsRef.current.
     }
     if (cameraControlsRef.current) {
       cameraControlsRef.current.update(delta);

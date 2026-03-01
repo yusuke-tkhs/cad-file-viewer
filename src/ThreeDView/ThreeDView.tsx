@@ -2,7 +2,7 @@ import { FC, memo, useRef, Suspense } from 'react';
 import { Flex, Button, Tooltip, IconButton } from '@radix-ui/themes';
 import {FileIcon} from '@radix-ui/react-icons'
 import { MeshRefContent } from './meshRef';
-import CustomOrbitControls from './OrbitControl/CustomOrbitControls';
+import ModelCanvas from './OrbitControl/ModelCanvas';
 import { open } from '@tauri-apps/plugin-dialog';
 import { invoke } from '@tauri-apps/api/core';
 import { GLTF} from 'three/addons';
@@ -68,7 +68,7 @@ const ThreeDView: FC<{ syncCamera: boolean, viewId: string }> = memo(({ syncCame
       </Flex>
       {/* TODO: このCanvas要素以下をファイル分けしてモデルビューとして独立させる */}
       <Suspense fallback={<Loading/>}>
-          <CustomOrbitControls syncCamera={syncCamera} viewId={viewId} eventEmitterRef={eventEmitter} />
+          <ModelCanvas syncCamera={syncCamera} viewId={viewId} eventEmitterRef={eventEmitter} />
       </Suspense>
     </Flex>
   );

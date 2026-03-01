@@ -27,7 +27,7 @@ const sharedCameraParams = {
 };
 
 // OrbitControls which supports syncronization of cameras between multi canvases.
-const CustomOrbitControls: FC<{
+const ModelCanvas: FC<{
   syncCamera: boolean;
   viewId: string;
   eventEmitterRef: RefObject<Emitter<ThreeDViewEvent>>;
@@ -189,4 +189,4 @@ const CustomOrbitControls: FC<{
   );
 };
 
-export default CustomOrbitControls;
+export default ModelCanvas;

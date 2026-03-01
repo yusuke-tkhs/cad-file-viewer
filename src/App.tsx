@@ -1,14 +1,17 @@
-import React, { FC } from 'react';
+import React, { FC, useRef } from 'react';
 import { Flex, Button, Grid, Box, DropdownMenu } from '@radix-ui/themes';
 
 import ThreeDView from './ThreeDView/ThreeDView';
 import range from './utility';
+import { CameraSyncEvent } from './ThreeDView/CameraEvent';
+import mitt from 'mitt';
 
 const App: FC = () => {
   const [rowNumberOfViewDivision, serRowNumberOfViewDivision] = React.useState(1);
   const [colNumberOfViewDivision, setColNumberOfViewDivision] = React.useState(1);
   const numberOfViews = rowNumberOfViewDivision * colNumberOfViewDivision;
   const [syncCamera, setSyncCamera] = React.useState(false);
+  const cameraSyncEventEmitter = useRef(mitt<CameraSyncEvent>());
 
   return (
     <Flex direction='column' position='fixed' width='100%' top='0' bottom='0' gap='2'>
@@ -94,7 +97,7 @@ const App: FC = () => {
         style={{ flexGrow: 1 }}
       >
         {range(0, rowNumberOfViewDivision * colNumberOfViewDivision - 1).map((index) => (
-          <ThreeDView key={index} viewId={index.toString()} syncCamera={syncCamera} />
+          <ThreeDView key={index} viewId={index.toString()} syncCamera={syncCamera} cameraSyncEventEmitter={cameraSyncEventEmitter} />
         ))}
       </Grid>
     </Flex>

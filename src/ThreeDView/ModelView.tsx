@@ -103,7 +103,7 @@ const ModelView: FC<{
     // cameraControlsRef.current.camera.updateProjectionMatrix();
 
     // cameraControlsの内部状態も更新
-    cameraControlsRef.current.setLookAt(position.x, position.y, position.z, target.x, target.y, target.z, false);
+    cameraControlsRef.current.normalizeRotations().setLookAt(position.x, position.y, position.z, target.x, target.y, target.z, false);
     cameraControlsRef.current.normalizeRotations().zoomTo(zoom, false);
 
     // 再描画を要求して、カメラの変更を反映

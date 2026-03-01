@@ -1,7 +1,7 @@
 import { FC, memo, useRef, Suspense, RefObject } from 'react';
 import { Flex, Button, Tooltip, IconButton } from '@radix-ui/themes';
 import {FileIcon} from '@radix-ui/react-icons'
-import ModelView from './OrbitControl/ModelView';
+import ModelView from './ModelView';
 import { open } from '@tauri-apps/plugin-dialog';
 import { invoke } from '@tauri-apps/api/core';
 

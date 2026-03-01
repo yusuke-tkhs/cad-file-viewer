@@ -7,8 +7,8 @@ import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import { useRecoilState } from 'recoil';
 import { sharedCameraState } from './sharedCameraState';
 import { Emitter } from 'mitt';
-import { ThreeDViewEvent } from '../ThreeDViewEvent';
-import { CameraSyncEvent } from '../CameraEvent';
+import { ThreeDViewEvent } from './ThreeDViewEvent';
+import { CameraSyncEvent } from './CameraEvent';
 
 const MANAGER = new LoadingManager();
 const THREE_PATH = `https://unpkg.com/three@0.${REVISION}.x`;

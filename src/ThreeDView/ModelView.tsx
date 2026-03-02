@@ -1,14 +1,14 @@
 import { FC, useRef, useState, useEffect, useCallback, RefObject } from 'react';
-import { useFrame, extend, useThree, Canvas, useLoader, invalidate } from '@react-three/fiber';
-import { OrbitControls, CameraControls, useGLTF, Center } from '@react-three/drei';
-import { OrthographicCamera, Box3, Vector3, Sphere, Quaternion, LoadingManager, REVISION } from 'three';
+import { Canvas, invalidate } from '@react-three/fiber';
+import { CameraControls, Center } from '@react-three/drei';
+import { OrthographicCamera, Box3, Vector3, Sphere, LoadingManager, REVISION } from 'three';
+import * as THREE from 'three';
 import { GLTF, GLTFLoader, DRACOLoader, KTX2Loader } from 'three/addons';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
-import { useRecoilState } from 'recoil';
-import { sharedCameraState } from './sharedCameraState';
 import { Emitter } from 'mitt';
 import { ThreeDViewEvent } from './ThreeDViewEvent';
 import { CameraSyncEvent } from './CameraEvent';
+import { ThreeEvent } from '@react-three/fiber'
 
 const MANAGER = new LoadingManager();
 const THREE_PATH = `https://unpkg.com/three@0.${REVISION}.x`;
@@ -19,13 +19,7 @@ const KTX2_LOADER = new KTX2Loader(MANAGER).setTranscoderPath(
 	`${THREE_PATH}/examples/jsm/libs/basis/`,
 );
 
-// カメラ同期用の変数
-const sharedCameraParams = {
-  position: new Vector3(0, 0, 0),
-  target: new Vector3(0, 0, 0),
-  quaternion: new Quaternion(),
-  zoom: 1,
-};
+const DRAG_PIXEL_TOLERANCE = 2; // pixels, ドラッグとクリックを区別する閾値
 
 function parseBlobAsGLTF(modelBlob: Uint8Array<ArrayBuffer>): Promise<GLTF> {
   const gltfLoader = new GLTFLoader(MANAGER)
@@ -65,25 +59,24 @@ const ModelView: FC<{
   const handleOnChange = useCallback(() => {
     // 「他からの同期中」でなければ、自分が Master としてイベントを発信
     if (syncCamera && !isSynkingCamera.current && cameraControlsRef.current && cameraControlsRef.current.active) {
-      console.log(`Emitting syncCamera event from ModelView ${viewId}`);
+      // console.log(`Emitting syncCamera event from ModelView ${viewId}`);
       let target = new Vector3();
       cameraControlsRef.current.getTarget(target);
 
-      const camera = cameraControlsRef.current.camera;
+      const camera = cameraControlsRef.current.camera as OrthographicCamera;
       cameraSyncEventEmitter.current.emit('syncCamera', {
         masterViewId: viewId,
         position: camera.position.clone(),
         target: target,
-        // quaternion: camera.quaternion.clone(),
-        zoom: camera.zoom
+        zoom: camera.zoom,
       });
     }
   }, [syncCamera, cameraControlsRef, cameraSyncEventEmitter, viewId]);
 
   const syncCameraEventHandler = useCallback(({ masterViewId, position, target, zoom }: CameraSyncEvent['syncCamera']) => {
-    console.log(`Received syncCamera event in ModelView ${viewId}`);
+    // console.log(`Received syncCamera event in ModelView ${viewId}`);
     if (!cameraControlsRef.current) {
-      console.log('cameraControlsRef is null');
+      // console.log('cameraControlsRef is null');
       return;
     }
     if (masterViewId == viewId) {
@@ -96,11 +89,6 @@ const ModelView: FC<{
     }
     // カメラの状態を更新する前に、同期フラグをオフにして、無限ループを防止
     isSynkingCamera.current = true;
-
-    // cameraControlsRef.current.camera.position.copy(position);
-    // cameraControlsRef.current.camera.quaternion.copy(quaternion);
-    // cameraControlsRef.current.camera.zoom = zoom;
-    // cameraControlsRef.current.camera.updateProjectionMatrix();
 
     // cameraControlsの内部状態も更新
     cameraControlsRef.current.normalizeRotations().setLookAt(position.x, position.y, position.z, target.x, target.y, target.z, false);
@@ -118,6 +106,14 @@ const ModelView: FC<{
     viewOperationEventEmitter.current.on('loadGltf', ({ modelBlob }) => {
       console.log('loadGltf event received in ModelView');
       parseBlobAsGLTF(modelBlob).then((gltf) => {
+        // 全てのメッシュの境界ボリュームを計算
+        // gltf.scene.traverse((child) => {
+        //   if ((child as THREE.Mesh).isMesh) {
+        //     child.raycast = THREE.Mesh.prototype.raycast; // ついでにraycast関数も保証
+        //     (child as THREE.Mesh).geometry.computeBoundingBox();
+        //     (child as THREE.Mesh).geometry.computeBoundingSphere();
+        //   }
+        // });
         setModelGltf(gltf);
         console.log('GLTF loaded and parsed successfully');
       }).catch((error) => {
@@ -152,6 +148,7 @@ const ModelView: FC<{
       style={{ background: 'white', width: '100%', height: '100%', flexGrow: 1 }}
       // frameloop='demand'
       dpr={[1, 1.5]}
+      onPointerMissed={() => console.log("Canvasは反応してるが、モデルには当たってない")}
       orthographic
     >
       <CameraControls
@@ -164,7 +161,23 @@ const ModelView: FC<{
       <ambientLight intensity={0.8} />
       <directionalLight position={[10, 10, 10]} intensity={1} />
       <pointLight position={[10, 10, 10]} />
-      {modelGltf != null && <Center><primitive object={modelGltf.scene} /></Center>}
+      <axesHelper args={[5]}/>
+      {modelGltf != null && <Center><primitive
+        object={modelGltf.scene}
+        raycast={THREE.Mesh.prototype.raycast}
+        onClick={(event: ThreeEvent<MouseEvent>) => {
+          // 1. 他の重なっているオブジェクトを貫通しないようにする
+          event.stopPropagation();
+
+          // 2. 面の情報を取得（event.face, event.faceIndex など）
+          // console.log("Clicked Face Index:", event.faceIndex);
+          // console.log("Clicked Object Name:", event.object.name); // どのパーツか
+          // ドラッグしていないときだけ、クリックイベントとして処理
+          if (event.delta < DRAG_PIXEL_TOLERANCE) {
+            console.log(event);
+          }
+        }}
+      /></Center>}
     </Canvas>
   );
 };

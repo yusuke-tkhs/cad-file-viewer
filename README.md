@@ -9,3 +9,7 @@ This template should help get you started developing with Tauri, React and Types
 # cad-file-viewer
 CAD file viewer.
 This repository is mainly for my hobby and studying, and my personal technical verification.
+
+# Lisense
+MIT License. I assume no responsibility whatsoever for any consequences resulting from the use of this software.
+https://opensource.org/licenses/mit-license.php

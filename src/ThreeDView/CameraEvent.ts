@@ -1,4 +1,5 @@
 import { Vector3, Quaternion } from 'three';
+import { OrthographicCameraJSON } from 'three';
 
 // Record<event name, event argument type>
 // Event type for communicating between canvas or its chidren and other components
@@ -9,5 +10,6 @@ export type CameraSyncEvent = {
     target: Vector3;
     // quaternion: Quaternion;
     zoom: number;
+    cameraState: OrthographicCameraJSON;
   };
 };

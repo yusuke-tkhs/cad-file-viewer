@@ -1,24 +1,21 @@
-import { FC, memo, useRef, Suspense, RefObject } from 'react';
+import { FC, memo, useRef } from 'react';
 import { Flex, Button, Tooltip, IconButton } from '@radix-ui/themes';
 import {FileIcon} from '@radix-ui/react-icons'
 import ModelView from './ModelView';
 import { open } from '@tauri-apps/plugin-dialog';
 import { invoke } from '@tauri-apps/api/core';
 
-import mitt, { Emitter } from 'mitt';
+import mitt from 'mitt';
 import { ThreeDViewEvent } from './ThreeDViewEvent';
-import { CameraSyncEvent } from './CameraEvent';
+import { CameraOperationEvent } from './SyncedCameraControls';
 
 
 const TOOLTIP_DURATION = 300;
 const MENUBAR_HEIGHT = '30px';
 
-function Loading() {
-  return <h2>🌀 Loading...</h2>;
-}
-
-const ThreeDView: FC<{ syncCamera: boolean, viewId: string, cameraSyncEventEmitter: RefObject<Emitter<CameraSyncEvent>> }> = memo(({ syncCamera, viewId, cameraSyncEventEmitter }) => {
+const ThreeDView: FC<{ syncCamera: boolean, viewId: string }> = memo(({ syncCamera, viewId }) => {
   const viewOperationEventEmitter = useRef(mitt<ThreeDViewEvent>());
+  const cameraOperationEmitter = useRef(mitt<CameraOperationEvent>());
   return (
     <Flex direction='column'>
       {/* menu bar*/}
@@ -40,10 +37,7 @@ const ThreeDView: FC<{ syncCamera: boolean, viewId: string, cameraSyncEventEmitt
           </Button>
         </Tooltip>
       </Flex>
-      {/* TODO: このCanvas要素以下をファイル分けしてモデルビューとして独立させる */}
-      <Suspense fallback={<Loading/>}>
-          <ModelView syncCamera={syncCamera} viewId={viewId} viewOperationEventEmitter={viewOperationEventEmitter} cameraSyncEventEmitter={cameraSyncEventEmitter} />
-      </Suspense>
+      <ModelView syncCamera={syncCamera} viewId={viewId} viewOperationEventEmitter={viewOperationEventEmitter} cameraOperationEmitter={cameraOperationEmitter} />
     </Flex>
   );
 });

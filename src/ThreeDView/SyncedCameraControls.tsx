@@ -3,10 +3,18 @@ import { invalidate } from '@react-three/fiber';
 import { CameraControls } from '@react-three/drei';
 import { OrthographicCamera, Box3, Vector3, Sphere } from 'three';
 import mitt, {Emitter} from 'mitt';
-import { CameraSyncEvent } from './CameraEvent';
 import * as THREE from 'three';
 
 // すべてのビューでの視点連動を管理するためのイベント送受信を担当するオブジェクト。
+type CameraSyncEvent = {
+  syncCamera: {
+    masterViewId: string;
+    position: Vector3;
+    target: Vector3;
+    zoom: number;
+  };
+};
+
 const cameraSyncEventEmitter = mitt<CameraSyncEvent>();
 
 function recenterCameraToModel(cameraControl: CameraControls, targetObjects: THREE.Group) {

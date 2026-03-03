@@ -4,13 +4,13 @@ import { CameraControls } from '@react-three/drei';
 import { OrthographicCamera, Box3, Vector3, Sphere } from 'three';
 import mitt, {Emitter} from 'mitt';
 import { CameraSyncEvent } from './CameraEvent';
-import { GLTF } from 'three/addons';
+import * as THREE from 'three';
 
 // すべてのビューでの視点連動を管理するためのイベント送受信を担当するオブジェクト。
 const cameraSyncEventEmitter = mitt<CameraSyncEvent>();
 
-function recenterCameraToModel(cameraControl: CameraControls, modelGltf: GLTF) {
-  const box = new Box3().setFromObject(modelGltf.scene);
+function recenterCameraToModel(cameraControl: CameraControls, targetObjects: THREE.Group) {
+  const box = new Box3().setFromObject(targetObjects);
   const boundingSphere = new Sphere();
   box.getBoundingSphere(boundingSphere);  // ボックスからスフィアを計算
   cameraControl.fitToSphere(boundingSphere, true); // スフィアにフィットさせる
@@ -23,12 +23,12 @@ export type CameraOperationEvent = {
 export const SyncedCameraControls: FC<{
   syncCamera: boolean;
   viewId: string;
-  modelGltf: GLTF | null;
+  targetObject: React.RefObject<THREE.Group | null>;
   cameraOperationEmitter: RefObject<Emitter<CameraOperationEvent>>;
 }> = ({
   syncCamera,
   viewId, // カメラコントロールが配置されるビューの一意な識別子
-  modelGltf,
+  targetObject,
   cameraOperationEmitter,
 }) => {
   const controlsRef = useRef<CameraControls>(null);
@@ -75,10 +75,10 @@ export const SyncedCameraControls: FC<{
 
   // モデルがロードされたときに再中心化する
   useEffect(() => {
-    if (modelGltf  && controlsRef.current) {
-      recenterCameraToModel(controlsRef.current, modelGltf);
+    if (targetObject.current  && controlsRef.current) {
+      recenterCameraToModel(controlsRef.current, targetObject.current);
     }
-  }, [modelGltf]);
+  }, [targetObject]);
 
   // イベントの購読とクリーンアップ
   useEffect(() => {
@@ -89,14 +89,14 @@ export const SyncedCameraControls: FC<{
   }, [cameraSyncEventEmitter, handleSyncCamera]);
   useEffect(() => {
     cameraOperationEmitter.current.on('recenterModel', () => {
-    if (controlsRef.current && modelGltf) {
-      recenterCameraToModel(controlsRef.current, modelGltf);
+    if (controlsRef.current && targetObject.current) {
+      recenterCameraToModel(controlsRef.current, targetObject.current);
     }
   });
     return () => {
       cameraOperationEmitter.current.off('recenterModel');
     };
-  }, [controlsRef, modelGltf]);
+  }, [controlsRef, targetObject, cameraOperationEmitter]);
 
   return (
     <CameraControls

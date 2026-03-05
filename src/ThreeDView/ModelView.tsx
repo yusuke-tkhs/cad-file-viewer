@@ -36,7 +36,10 @@ const ModelView: FC<{
     <Canvas
       style={{ background: 'white', width: '100%', height: '100%', flexGrow: 1 }}
       dpr={[1, 1.5]}
-      onPointerMissed={() => console.log("Canvasは反応してるが、モデルには当たってない")}
+      onPointerMissed={() => {
+        console.log("Canvasは反応してるが、モデルには当たってない");
+        modelManageEmitter.current.emit('resetSelection');
+      }}
       orthographic
     >
       <Suspense fallback={<Loader/>}>
